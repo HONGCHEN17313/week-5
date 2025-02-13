@@ -1,0 +1,281 @@
+---
+title: "week 5"
+format: 
+  revealjs:
+    embed-resources: true
+editor: visual
+---
+
+## Homework
+
+· Calculate means, SDs, and confidence intervals (89%, 95%, 99%) for one continuous and one binary variable. Interpret the confidence intervals.
+
+· Do two simulations (one continuous, one binary) to show that simulation-based standard deviations of the estimate converge to the formula-based standard error of the sampling distribution. Explain the result to show you understand what you did.
+
+```{r}
+#| echo: false
+#| message : false
+#| warning: false
+library(gapminder)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+## Continuous Variable
+
+```{r}
+life <- gapminder|>
+  select(lifeExp)|>
+  drop_na()
+MEAN <- mean(life$lifeExp)
+SD <- sd(life$lifeExp)
+```
+
+The continuous variable I choose is the life Expectancy from dataset Gapminder.
+
+Mean of LifeExp = `r round(MEAN, 2)`
+
+Standard Deviation of lifeExp = `r round(SD, 2)`
+
+Standard Error = $\frac{SD}{\sqrt{n}}$ = `r 12.92/41.28`
+
+## Confidence Interval
+
+89% confidence interval = (`r round((MEAN - 1.598*0.3130), 2)` , `r round((MEAN + 1.598*0.3130), 2)`)
+
+For the population life expectancy, the probability that the expectancy is within range 58.97 to 59.97 years is 0.89.
+
+95% confidence interval = (`r round((MEAN - 1.96*0.3130), 2)` , `r round((MEAN + 1.96*0.3130), 2)`)
+
+For the population life expectancy, the probability that the expectancy is within range 58.86 to 60.09 years is 0.95.
+
+99% confidence interval = (`r round((MEAN - 2.58*0.3130), 2)` , `r round((MEAN + 2.58*0.310),2)`)
+
+For the population life expectancy, the probability that the expectancy is within range 58.67 to 60.27 is 0.99.
+
+## Continuous Variable Simulation
+
+If we randomly select 150 units from eligible total population, and repeat the selection for80, 580 and 1080 times. We will get 80, 580, 1080 samples with 150 units each, we calculate mean of each sample group and get a distribution of means of each sample group.
+
+
+## 80 times
+
+```{r}
+set.seed(188)
+
+means80 <- replicate(80, {
+  sample_data <- slice_sample(life, n = 150)
+  mean(sample_data$lifeExp, na.rm = TRUE)
+})
+
+
+MEANS80 <- data.frame(sample_mean = means80)
+
+ggplot(MEANS80, aes(x = sample_mean))+
+geom_histogram( aes(y = after_stat(density)),
+                binwidth=0.3,
+                boundary = 0, 
+                color= "grey")+
+  geom_density(color = "blue", adjust = 2)+
+  xlab("Means of Assimulation")+
+  ylab( "Density")+
+  geom_vline(xintercept = mean(means80),
+             color = "red")+
+  ggtitle("Distribution of Sample Means 80 times")+
+  theme_minimal()
+```
+The mean of sample means is `r round(mean(means80),2)` 
+
+The standard deviation of the sample means is `r round(sd(means80),2)`
+
+SE = $\frac{0.96}{\sqrt{80}}$ = 0.107
+
+## 580 times
+```{r}
+means580 <- replicate(580, {
+  sample_data <- slice_sample(life, n = 150)
+  mean(sample_data$lifeExp, na.rm = TRUE)
+})
+
+
+MEANS580 <- data.frame(sample_mean = means580)
+
+ggplot(MEANS580, aes(x = sample_mean))+
+geom_histogram( aes(y = after_stat(density)),
+                binwidth=0.3,
+                boundary = 0, 
+                color= "grey")+
+  geom_density(color = "blue", adjust = 2)+
+  xlab("Means of Assimulation")+
+  ylab( "Density")+
+  geom_vline(xintercept = mean(means580),
+             color = "red")+
+  ggtitle("Distribution of Sample Means 580 times")+
+  theme_minimal()
+```
+The mean of sample means is `r round(mean(means580),2)` 
+
+The standard deviation of the sample means is `r round(sd(means580),2)`
+
+SE = $\frac{1.04}{\sqrt{580}}$ = 0.043
+
+## 1080 times
+```{r}
+means1080 <- replicate(1080, {
+  sample_data <- slice_sample(life, n = 150)
+  mean(sample_data$lifeExp, na.rm = TRUE)
+})
+
+
+MEANS1080 <- data.frame(sample_mean = means1080)
+
+ggplot(MEANS1080, aes(x = sample_mean))+
+geom_histogram( aes(y = after_stat(density)),
+                binwidth=0.3,
+                boundary = 0, 
+                color= "grey")+
+  geom_density(color = "blue", adjust = 2)+
+  xlab("Means of Assimulation")+
+  ylab( "Density")+
+  geom_vline(xintercept = mean(means1080),
+             color = "red")+
+  ggtitle("Distribution of Sample Means 1080 times")+
+  theme_minimal()
+```
+
+The mean of sample means is `r round(mean(means1080),2)` 
+
+The standard deviation of the sample means is `r round(sd(means1080),2)`
+
+SE = $\frac{1}{\sqrt{1080}}$ = 0.030
+
+## Interpret
+The larger the sample size, the smaller the standard error.
+
+SE80times > SE580times > SE1080times.
+
+This demonstrates that as the sample size increases, the estimated mean more closely converges to the true population mean.
+
+## Binary Variable
+
+Suppose we have a partial population of 10000, among which 8000 are older or equal to 18 years old and the rest 2000 are minors. We assign older with 1, and minors with 0.
+
+Then we create a Bernoulli distribution with p = 0.8.
+
+Mean = 0.8
+
+For variable,"Adults or Minors", Var\[X\] = p(1-p)= 0.8\*0.2 = 0.16
+
+SD\[X\] = $\sqrt{p(1-p)}$ = $\sqrt{0.16}$ = 0.4
+
+SE = $\frac{SD}{\sqrt{n}}$ = 0.4/100 = 0.004
+
+## Confidence Interval
+
+89% confidence interval = mean +/- 1.598SE = 0.8 +/- 0.006 = (0.794, 0.806)
+
+The probability of the true proportion of adults in the population to be within range 0.794 to 0.806 is 0.89.
+
+
+95% confidence interval = mean +/- 1.98SE = 0.8 +/- 0.008 = (0.792, 0.808)
+
+The probability of the true proportion of adults in the population to be within range 0.792 to 0.808 is 0.95.
+
+99% confidence interval = mean +/- 2.58SE = 0.8 +/- 0.010 = (0.790, 0.810)
+
+The probability of the true proportion of adults in the population to be within range 0.790 to 0.810 is 0.99.
+
+## Binary Variable Simulation
+
+If we randomly select 500 people from the population and count p for this sample. We draw 20, 200, 2000 times.
+
+```{r}
+population <- tibble(id = 1:10000) |>
+  mutate(adults = if_else(id <= 8000, "Adult", "Minor"))
+ggplot(population,aes(adults))+
+  ggtitle("Adults or Minors")+
+  geom_bar()
+```
+
+## 20 times
+```{r}
+p_sample20 <- replicate(20, {
+  pp <- slice_sample(population, n = 500)
+       sum(pp$adults == "Adult")
+})
+
+PPsample20 <- data.frame(p = p_sample20/500)
+
+ggplot(PPsample20, aes(x = p))+
+  geom_histogram(aes(y = after_stat(density)),
+                     binwidth = 0.01,
+                     boundary = 0,
+                     color = "grey")+
+geom_density(color = "blue")+
+              xlab("p of Adults")+
+  ylab("density")+
+            ggtitle("Distribution of sample p of Adults 20 times")
+```
+The sample mean is `r mean(PPsample20$p)`.
+
+Standard deviation is `r sd(PPsample20$p)`
+
+Standard Error is $\frac{0.0140}{\sqrt{20}}$ = 0.0031
+
+## 200 times
+```{r}
+p_sample200 <- replicate(200, {
+  pp <- slice_sample(population, n = 500)
+       sum(pp$adults == "Adult")
+})
+
+PPsample200 <- data.frame(p = p_sample200/500)
+
+ggplot(PPsample200, aes(x = p))+
+  geom_histogram(aes(y = after_stat(density)),
+                     binwidth = 0.01,
+                     boundary = 0,
+                     color = "grey")+
+geom_density(color = "blue")+
+              xlab("p of Adults")+
+  ylab("density")+
+            ggtitle("Distribution of sample p of Adults 200 times")
+```
+The sample mean is `r mean(PPsample200$p)`.
+
+Standard deviation is `r sd(PPsample200$p)`
+
+Standard Error is $\frac{0.0170}{\sqrt{200}}$ = 0.0012
+
+## 2000 times
+```{r}
+p_sample2000 <- replicate(2000, {
+  pp <- slice_sample(population, n = 500)
+       sum(pp$adults == "Adult")
+})
+
+PPsample2000 <- data.frame(p = p_sample2000/500)
+
+ggplot(PPsample2000, aes(x = p))+
+  geom_histogram(aes(y = after_stat(density)),
+                     binwidth = 0.01,
+                     boundary = 0,
+                     color = "grey")+
+geom_density(color = "blue")+
+              xlab("p of Adults")+
+  ylab("density")+
+            ggtitle("Distribution of sample p of Adults 2000 times")
+```
+The sample mean is `r mean(PPsample2000$p)`.
+
+Standard deviation is `r sd(PPsample2000$p)`
+
+Standard Error is $\frac{0.0176}{\sqrt{2000}}$ = 0.0004
+
+## Intepret
+The larger the sample size, the smaller the standard error.
+
+SE20times > SE200times > SE2000times.
+
+This demonstrates that as the sample size increases, the estimated mean more closely converges to the true population mean.
