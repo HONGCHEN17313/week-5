@@ -1,0 +1,261 @@
+---
+title: "week 5"
+format: 
+  revealjs:
+    embed-resources: true
+editor: visual
+---
+
+## Homework
+
+· Calculate means, SDs, and confidence intervals (89%, 95%, 99%) for one continuous and one binary variable. Interpret the confidence intervals.
+
+· Do two simulations (one continuous, one binary) to show that simulation-based standard deviations of the estimate converge to the formula-based standard error of the sampling distribution. Explain the result to show you understand what you did.
+
+```{r}
+#| echo: false
+#| message : false
+#| warning: false
+library(gapminder)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+## Continuous Variable
+
+```{r}
+life <- gapminder|>
+  select(lifeExp)|>
+  drop_na()
+MEAN <- mean(life$lifeExp)
+SD <- sd(life$lifeExp)
+```
+
+The continuous variable I choose is the life Expectancy from dataset Gapminder.
+
+Mean of LifeExp = `r round(MEAN, 2)`
+
+Standard Deviation of lifeExp = `r round(SD, 2)`
+
+Standard Error = $\frac{SD}{\sqrt{n}}$ = `r 12.92/41.28`
+
+## Confidence Interval
+
+89% confidence interval = (`r round((MEAN - 1.598*0.3130), 2)` , `r round((MEAN + 1.598*0.3130), 2)`)
+
+For the population life expectancy, the probability that the expectancy is within range 58.97 to 59.97 years is 0.89.
+
+95% confidence interval = (`r round((MEAN - 1.96*0.3130), 2)` , `r round((MEAN + 1.96*0.3130), 2)`)
+
+For the population life expectancy, the probability that the expectancy is within range 58.86 to 60.09 years is 0.95.
+
+99% confidence interval = (`r round((MEAN - 2.58*0.3130), 2)` , `r round((MEAN + 2.58*0.310),2)`)
+
+For the population life expectancy, the probability that the expectancy is within range 58.67 to 60.27 is 0.99.
+
+## Continuous Variable Simulation
+
+First, we draw 150 units from population.
+
+```{r}
+set.seed(188)
+
+unit150 <- slice_sample(life, n = 150)
+mean150 <- mean(unit150$lifeExp)
+sd150 <- sd(unit150$lifeExp)
+se150 <- sd150 / sqrt(nrow(unit150))
+```
+The sample mean 59.96, standard deviation is 12.53 and standard error is 1.0230.
+
+
+## Simulation 580 times
+
+Now we draw 150 units from population for 580 times, we calculate mean of every sample group and get a distribution of the means of 580 sample groups.
+
+```{r}
+means580 <- replicate(580, {
+  sample_data <- slice_sample(life, n = 150)
+  mean(sample_data$lifeExp, na.rm = TRUE)
+})
+
+
+MEANS580 <- data.frame(sample_mean = means580)
+
+ggplot(MEANS580, aes(x = sample_mean))+
+geom_histogram( aes(y = after_stat(density)),
+                binwidth=0.3,
+                boundary = 0, 
+                color= "grey")+
+  geom_density(color = "blue", adjust = 2)+
+  xlab("Means of Assimulation")+
+  ylab( "Density")+
+  geom_vline(xintercept = mean(means580),
+             color = "red")+
+  ggtitle("Distribution of Sample Means 580 times")+
+  theme_minimal()
+```
+
+```{r}
+
+simulation_mean <- mean(means580)
+
+simulation_sd <- sd(means580)
+
+```
+
+
+## Interpret
+Formula-based standard error is 1.0230.
+
+Simulation standard deviation is `r round(simulation_sd,4)`, which is very close to formula-based standard error.
+
+
+
+## Binary Variable
+
+Suppose we have a partial population of 10000, among which 8000 are older or equal to 18 years old and the rest 2000 are minors. We assign older with 1, and minors with 0.
+
+Then we create a Bernoulli distribution with p = 0.8.
+
+Mean = 0.8
+
+For variable,"Adults or Minors", Var\[X\] = p(1-p)= 0.8\*0.2 = 0.16
+
+SD\[X\] = $\sqrt{p(1-p)}$ = $\sqrt{0.16}$ = 0.4
+
+SE = $\frac{SD}{\sqrt{n}}$ = 0.4/100 = 0.004
+
+## Confidence Interval
+
+89% confidence interval = mean +/- 1.598SE = 0.8 +/- 0.006 = (0.794, 0.806)
+
+The probability of the true proportion of adults in the population to be within range 0.794 to 0.806 is 0.89.
+
+
+95% confidence interval = mean +/- 1.98SE = 0.8 +/- 0.008 = (0.792, 0.808)
+
+The probability of the true proportion of adults in the population to be within range 0.792 to 0.808 is 0.95.
+
+99% confidence interval = mean +/- 2.58SE = 0.8 +/- 0.010 = (0.790, 0.810)
+
+The probability of the true proportion of adults in the population to be within range 0.790 to 0.810 is 0.99.
+
+## Binary Variable Simulation
+
+First we randomly select 500 people from the population and count p for this sample. 
+
+```{r}
+population <- tibble(id = 1:10000) |>
+  mutate(adults = if_else(id <= 8000, "Adult", "Minor"))
+ggplot(population,aes(adults))+
+  ggtitle("Adults or Minors")+
+  geom_bar()
+```
+
+## 500 units
+```{r}
+sample_500 <- slice_sample(population, n = 500)
+p_500 <- sum(sample_500$adults == "Adult")/500
+sd_500 <- sqrt(0.8*0.2)
+se_500 <- sd_500 / sqrt(500)
+```
+p of 500 units is 0.8.
+
+Standard deviation is 0.4.
+
+Standard error is 0.01789.
+
+## Simulation 20 times
+Now we draw 20 samples with 500 units each.
+```{r}
+p_sample20 <- replicate(20, {
+  pp <- slice_sample(population, n = 500)
+       sum(pp$adults == "Adult")
+})
+
+PPsample20 <- data.frame(p = p_sample20/500)
+
+ggplot(PPsample20, aes(x = p))+
+  geom_histogram(aes(y = after_stat(density)),
+                     binwidth = 0.01,
+                     boundary = 0,
+                     color = "grey")+
+geom_density(color = "blue")+
+              xlab("p of Adults")+
+  ylab("density")+
+            ggtitle("Distribution of sample p of Adults 20 times")
+```
+
+```{r}
+smean_20 <- mean(PPsample20$p)
+
+ssd_20 <- sd(PPsample20$p)
+```
+
+## Simulation 200 times
+Now we draw 200 samples with 500 units each.
+```{r}
+p_sample200 <- replicate(200, {
+  pp <- slice_sample(population, n = 500)
+       sum(pp$adults == "Adult")
+})
+
+PPsample200 <- data.frame(p = p_sample200/500)
+
+ggplot(PPsample200, aes(x = p))+
+  geom_histogram(aes(y = after_stat(density)),
+                     binwidth = 0.01,
+                     boundary = 0,
+                     color = "grey")+
+geom_density(color = "blue")+
+              xlab("p of Adults")+
+  ylab("density")+
+            ggtitle("Distribution of sample p of Adults 200 times")
+```
+
+```{r}
+smean <- mean(PPsample200$p)
+
+ssd <- sd(PPsample200$p)
+```
+
+
+## Simulation 2000 times
+Now we draw 2000 samples with 500 units each.
+```{r}
+p_sample2000 <- replicate(2000, {
+  pp <- slice_sample(population, n = 500)
+       sum(pp$adults == "Adult")
+})
+
+PPsample2000 <- data.frame(p = p_sample2000/500)
+
+ggplot(PPsample2000, aes(x = p))+
+  geom_histogram(aes(y = after_stat(density)),
+                     binwidth = 0.01,
+                     boundary = 0,
+                     color = "grey")+
+geom_density(color = "blue")+
+              xlab("p of Adults")+
+  ylab("density")+
+            ggtitle("Distribution of sample p of Adults 2000 times")
+```
+
+```{r}
+smean_2000 <- mean(PPsample2000$p)
+
+ssd_2000 <- sd(PPsample2000$p)
+```
+
+
+## Intepret
+Formula-based error is 0.01789.
+
+Standard deviation of simulation mean (20 times) is 0.02417.
+
+Standard deviation of simulation mean (200 times) is 0.01560.
+
+Standard deviation of simulation mean (2000 times) is 0.01742.
+
+The larger the simulation sample, the closer the standard deviation of simulation mean to formula-based standard error.
